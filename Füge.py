@@ -672,19 +672,22 @@ df.head()
 
 df["total_bill"] = df["total_bill"] - df["tip"]
 
-df.plot.scatter("tip", "total_bill")
+df.plot.scatter("tip", "total_bill") # Yüksek bahşiş alanların toplam fiyatı yüksek oluyor.
 plt.show()
 
 df["tip"].corr(df["total_bill"])
 
-######################################################
-# AB Testing (Bağımsız İki Örneklem T Testi)
-######################################################
+df["total_bill"].corr(df["tip"])
 
-# 1. Hipotezleri Kur
+
+######################################################
+# AB Testing (Bağımsız İki Örneklem T Testi)    ort-dönüsüm-oranlar
+######################################################
+###bu yol:ortalamalara yönelik ise
+# 1. Hipotezleri Kur  örn:iki grup ort aras fark yoktur
 # 2. Varsayım Kontrolü
-#   - 1. Normallik Varsayımı
-#   - 2. Varyans Homojenliği
+#   - 1. Normallik Varsayımı    ilgili gruplarin dagiliminin normalligi
+#   - 2. Varyans Homojenliği    varyanslarinin dagiliminin benzer olmasi
 # 3. Hipotezin Uygulanması
 #   - 1. Varsayımlar sağlanıyorsa bağımsız iki örneklem t testi (parametrik test)
 #   - 2. Varsayımlar sağlanmıyorsa mannwhitneyu testi (non-parametrik test)
@@ -704,19 +707,22 @@ df.head()
 
 df.groupby("smoker").agg({"total_bill": "mean"})
 
+
+df.groupby("smoker").agg({"tip": "mean"})
+
 ############################
 # 1. Hipotezi Kur
 ############################
 
-# H0: M1 = M2
+# H0: M1 = M2  (fark yoktur demektir)
 # H1: M1 != M2
 
 ############################
 # 2. Varsayım Kontrolü
 ############################
 
-# Normallik Varsayımı
-# Varyans Homojenliği
+# Normallik Varsayımı    :bir degiskenin dagiliminin standart normal olup olmadiginin hipotes testidir.
+# Varyans Homojenliği varsayimi:
 
 ############################
 # Normallik Varsayımı
@@ -726,7 +732,7 @@ df.groupby("smoker").agg({"total_bill": "mean"})
 # H1:..sağlanmamaktadır.
 
 
-test_stat, pvalue = shapiro(df.loc[df["smoker"] == "Yes", "total_bill"])
+test_stat, pvalue = shapiro(df.loc[df["smoker"] == "Yes", "total_bill"]) #normallik testidir
 print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
 
 # p-value < ise 0.05'ten HO RED.
@@ -758,7 +764,7 @@ print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
 # 1. Varsayımlar sağlanıyorsa bağımsız iki örneklem t testi (parametrik test)
 # 2. Varsayımlar sağlanmıyorsa mannwhitneyu testi (non-parametrik test)
 
-############################
+############################bu saglanmadi ama saglanmis gibi hesapliyalim####
 # 1.1 Varsayımlar sağlanıyorsa bağımsız iki örneklem t testi (parametrik test)
 ############################
 
@@ -767,12 +773,17 @@ test_stat, pvalue = ttest_ind(df.loc[df["smoker"] == "Yes", "total_bill"],
                               equal_var=True)
 
 print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
+##ttest: normallik saglaniyorsa beni kullanabilirsin-
+# iki varsayimda saglaniyorsa kullanabilirsin-
+# normallik saglaniyor homojenlik saglanmiyorsadakullanabilirsin ama False gir der böylece arka tarafta welch testini yapar---
+
 
 # p-value < ise 0.05 'ten HO RED.
 # p-value < değilse 0.05 H0 REDDEDILEMEZ.
 
-############################
-# 1.2 Varsayımlar sağlanmıyorsa mannwhitneyu testi (non-parametrik test)
+############################bu olayda en basta  sartlar saglanmadigi icin bu yapilmali
+
+# 1.2 Varsayımlar sağlanmıyorsa mannwhitneyu testi (non-parametrik test)--ortalama -medyan kiyaslama testidir
 ############################
 
 test_stat, pvalue = mannwhitneyu(df.loc[df["smoker"] == "Yes", "total_bill"],
@@ -808,37 +819,36 @@ df.groupby("sex").agg({"age": "mean"})
 
 
 test_stat, pvalue = shapiro(df.loc[df["sex"] == "female", "age"].dropna())
-print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
+print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))   #birinci grup icin normallik saglaniyor mu? 0,007 cikti h0 reddedilir
 
 test_stat, pvalue = shapiro(df.loc[df["sex"] == "male", "age"].dropna())
-print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
+print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))  #ho reddilir 0,05 ten kucuk oldugundan
 
-# Varyans homojenliği
+# Varyans homojenliği   degiskenlerin dagilimlarinin birbirlerine benzerligini degerlendiriyor
 # H0: Varyanslar Homojendir
 # H1: Varyanslar Homojen Değildir
 
 test_stat, pvalue = levene(df.loc[df["sex"] == "female", "age"].dropna(),
                            df.loc[df["sex"] == "male", "age"].dropna())
 
-print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
+print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))   #0,9 ho kabul edilir varyanslar homojen
 
 # Varsayımlar sağlanmadığı için nonparametrik
 
 test_stat, pvalue = mannwhitneyu(df.loc[df["sex"] == "female", "age"].dropna(),
                                  df.loc[df["sex"] == "male", "age"].dropna())
 
-print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
+print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue)) #0,02 ho fark yoktur diyordu.0,05 ten kucuk oldugundan reddilir
+
+
+
+
+
+#fark vardir deriz
+
 
 
 # 90 280
-
-
-
-
-
-
-
-
 
 
 
@@ -869,27 +879,36 @@ print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
 
 
 
-# Normallik varsayımı sağlanmadığı için nonparametrik.
+# Normallik varsayımı sağlanmadığı için nonparametrik.(buna medyan-siralama  kiyasida denir)
 
 # Hipotez (H0: M1 = M2)
 test_stat, pvalue = mannwhitneyu(df.loc[df["Outcome"] == 1, "Age"].dropna(),
                                  df.loc[df["Outcome"] == 0, "Age"].dropna())
 print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
+#Ho reddedilir 0,05 ten kucuk oldugundan
+#yas ile diyabet arasinda anlamli bir fark vardir  --bunlar ortalama testiydi simdiye kadar
+
+
+
+
+
 
 
 ###################################################
 # İş Problemi: Kursun Büyük Çoğunluğunu İzleyenler ile İzlemeyenlerin Puanları Birbirinden Farklı mı?
 ###################################################
 
-# H0: M1 = M2 (... iki grup ortalamaları arasında ist ol.anl.fark yoktur.)
+# H0: M1 = M2 (... iki grup ortalamaları arasında ist olarak .anlamli bir .fark yoktur.)
 # H1: M1 != M2 (...vardır)
 
 df = pd.read_csv("datasets/course_reviews.csv")
 df.head()
-
+df['Rating'].mean()
 df[(df["Progress"] > 75)]["Rating"].mean()
 
 df[(df["Progress"] < 25)]["Rating"].mean()
+
+df[(df["Progress"]<10)]["Rating"].mean()
 
 
 test_stat, pvalue = shapiro(df[(df["Progress"] > 75)]["Rating"])
@@ -904,6 +923,12 @@ test_stat, pvalue = mannwhitneyu(df[(df["Progress"] > 75)]["Rating"],
 
 print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
 
+#kursu daha fazla izleyenlerin puan ortalamasi daha yuksek deriz-- ho reddedilir
+
+
+
+
+
 
 ######################################################
 # AB Testing (İki Örneklem Oran Testi)
@@ -913,12 +938,13 @@ print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
 # Yeni Tasarımın Dönüşüm Oranı ile Eski Tasarımın Dönüşüm Oranı Arasında İst. Ol. Anlamlı Farklılık Yoktur.
 # H1: p1 != p2
 # ... vardır
-
+###örnek sayisi 30 dan buyuk n>30 olmali
 basari_sayisi = np.array([300, 250])
 gozlem_sayilari = np.array([1000, 1100])
 
 proportions_ztest(count=basari_sayisi, nobs=gozlem_sayilari)
-
+#0.0001532232957772221<0,05  ho reddedilir
+#iki oran arasinda anlamli bir farklilik vardrir deriz
 
 basari_sayisi / gozlem_sayilari
 
@@ -948,12 +974,16 @@ test_stat, pvalue = proportions_ztest(count=[female_succ_count, male_succ_count]
                                             df.loc[df["sex"] == "male", "survived"].shape[0]])
 print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
 
+#ho reddedilir..fark vardir
+
+
 
 ######################################################
 # ANOVA (Analysis of Variance)
 ######################################################
 
 # İkiden fazla grup ortalamasını karşılaştırmak için kullanılır.
+#sig. anlamlilik degeri =p velue degeri
 
 df = sns.load_dataset("tips")
 df.head()
@@ -973,7 +1003,7 @@ df.groupby("day")["total_bill"].mean()
 # Varyans homojenliği varsayımı
 
 # Varsayım sağlanıyorsa one way anova
-# Varsayım sağlanmıyorsa kruskal
+# Varsayım sağlanmıyorsa kruskal    (nunparametrik)
 
 # H0: Normal dağılım varsayımı sağlanmaktadır.
 
@@ -1010,7 +1040,11 @@ kruskal(df.loc[df["day"] == "Thur", "total_bill"],
         df.loc[df["day"] == "Fri", "total_bill"],
         df.loc[df["day"] == "Sat", "total_bill"],
         df.loc[df["day"] == "Sun", "total_bill"])
+#fark vardir sonuc
 
+
+
+#ama farklilik hangi gruptan kaynaklaniyor
 from statsmodels.stats.multicomp import MultiComparison
 comparison = MultiComparison(df['total_bill'], df['day'])
 tukey = comparison.tukeyhsd(0.05)
@@ -1020,6 +1054,165 @@ print(tukey.summary())
 --------------------------------------------------------------------------------
 
 
+
+#####################################################
+# AB Testi ile BiddingYöntemlerinin Dönüşümünün Karşılaştırılması
+#####################################################
+
+#####################################################
+# İş Problemi
+#####################################################
+
+# Facebook kısa süre önce mevcut "maximumbidding" adı verilen teklif verme türüne alternatif
+# olarak yeni bir teklif türü olan "average bidding"’i tanıttı. Müşterilerimizden biri olan bombabomba.com,
+# bu yeni özelliği test etmeye karar verdi veaveragebidding'in maximumbidding'den daha fazla dönüşüm
+# getirip getirmediğini anlamak için bir A/B testi yapmak istiyor.A/B testi 1 aydır devam ediyor ve
+# bombabomba.com şimdi sizden bu A/B testinin sonuçlarını analiz etmenizi bekliyor.Bombabomba.com için
+# nihai başarı ölçütü Purchase'dır. Bu nedenle, istatistiksel testler için Purchasemetriğine odaklanılmalıdır.
+
+
+
+
+#####################################################
+# Veri Seti Hikayesi
+#####################################################
+
+# Bir firmanın web site bilgilerini içeren bu veri setinde kullanıcıların gördükleri ve tıkladıkları
+# reklam sayıları gibi bilgilerin yanı sıra buradan gelen kazanç bilgileri yer almaktadır.Kontrol ve Test
+# grubu olmak üzere iki ayrı veri seti vardır. Bu veri setleriab_testing.xlsxexcel’ininayrı sayfalarında yer
+# almaktadır. Kontrol grubuna Maximum Bidding, test grubuna AverageBiddinguygulanmıştır.
+
+# impression: Reklam görüntüleme sayısı
+# Click: Görüntülenen reklama tıklama sayısı
+# Purchase: Tıklanan reklamlar sonrası satın alınan ürün sayısı
+# Earning: Satın alınan ürünler sonrası elde edilen kazanç
+
+
+
+#####################################################
+# Proje Görevleri
+#####################################################
+
+######################################################
+# AB Testing (Bağımsız İki Örneklem T Testi)
+######################################################
+
+# 1. Hipotezleri Kur
+# 2. Varsayım Kontrolü
+#   - 1. Normallik Varsayımı (shapiro)
+#   - 2. Varyans Homojenliği (levene)
+# 3. Hipotezin Uygulanması
+#   - 1. Varsayımlar sağlanıyorsa bağımsız iki örneklem t testi
+#   - 2. Varsayımlar sağlanmıyorsa mannwhitneyu testi
+# 4. p-value değerine göre sonuçları yorumla
+# Not:
+# - Normallik sağlanmıyorsa direkt 2 numara. Varyans homojenliği sağlanmıyorsa 1 numaraya arguman girilir.
+# - Normallik incelemesi öncesi aykırı değer incelemesi ve düzeltmesi yapmak faydalı olabilir.
+
+
+
+
+#####################################################
+# Görev 1:  Veriyi Hazırlama ve Analiz Etme
+#####################################################
+
+# Adım 1:  ab_testing_data.xlsx adlı kontrol ve test grubu verilerinden oluşan veri setini okutunuz.
+# Kontrol ve test grubu verilerini ayrı değişkenlere atayınız.
+
+
+import pandas as pd
+import math
+import scipy.stats as st
+from sklearn.preprocessing import MinMaxScaler
+
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
+pd.set_option('display.width', 500)
+pd.set_option('display.expand_frame_repr', False)
+pd.set_option('display.float_format', lambda x: '%.5f' % x)
+
+
+
+
+
+kontrol_df = pd.read_excel("datasets/ab_testing.xlsx", sheet_name='Control Group')
+test_df = pd.read_excel("datasets/ab_testing.xlsx", sheet_name='Test Group')
+
+
+kontrol_df.head()
+
+
+test_df.head()
+
+
+
+
+
+
+# Adım 2: Kontrol ve test grubu verilerini analiz ediniz.
+
+
+
+
+
+
+
+
+
+
+
+
+# Adım 3: Analiz işleminden sonra concat metodunu kullanarak kontrol ve test grubu verilerini birleştiriniz.
+
+
+concat_df = pd.concat([kontrol_df, test_df], axis=0)
+
+concat_df.head()
+
+#####################################################
+# Görev 2:  A/B Testinin Hipotezinin Tanımlanması
+#####################################################
+
+# Adım 1: Hipotezi tanımlayınız.
+
+
+# Adım 2: Kontrol ve test grubu için purchase(kazanç) ortalamalarını analiz ediniz
+
+
+#####################################################
+# GÖREV 3: Hipotez Testinin Gerçekleştirilmesi
+#####################################################
+
+######################################################
+# AB Testing (Bağımsız İki Örneklem T Testi)
+######################################################
+
+
+# Adım 1: Hipotez testi yapılmadan önce varsayım kontrollerini yapınız.Bunlar Normallik Varsayımı ve Varyans Homojenliğidir.
+
+# Kontrol ve test grubunun normallik varsayımına uyup uymadığını Purchase değişkeni üzerinden ayrı ayrı test ediniz
+
+
+
+
+# Adım 2: Normallik Varsayımı ve Varyans Homojenliği sonuçlarına göre uygun testi seçiniz
+
+
+# Adım 3: Test sonucunda elde edilen p_value değerini göz önünde bulundurarak kontrol ve test grubu satın alma
+# ortalamaları arasında istatistiki olarak anlamlı bir fark olup olmadığını yorumlayınız.
+
+
+
+##############################################################
+# GÖREV 4 : Sonuçların Analizi
+##############################################################
+
+# Adım 1: Hangi testi kullandınız, sebeplerini belirtiniz.
+
+
+
+
+# Adım 2: Elde ettiğiniz test sonuçlarına göre müşteriye tavsiyede bulununuz.
 
 
 
